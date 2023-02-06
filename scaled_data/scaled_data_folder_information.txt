@@ -1,0 +1,5 @@
+Within this folder, scaled data will be saved following the execution of the script `scale_data.py`
+
+This will contain all participant concatenated in two files:
+- by trial
+- by trial type

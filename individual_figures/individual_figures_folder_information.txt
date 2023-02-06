@@ -1,0 +1,1 @@
+This folder is the location that individual figures will be saved into following the full analysis pipeline.
