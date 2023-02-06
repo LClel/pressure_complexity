@@ -92,8 +92,6 @@ def scale_all_data(stomps):
 
     compressed_pickle('../scaled_data/scaled raw data', collated_data)
 
-    pk.dump(participant_masses, open("../scaled_data/ppt_masses.pkl", "wb"))
-
 
 def scale_data_trial_type(stomps):
     """ Collates data from all trials for all participants, scaled to participant 1 (size 11)
