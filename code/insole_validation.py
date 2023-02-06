@@ -203,6 +203,8 @@ def project_insole_calibration(separation_indexes, calibration_constants):
     plt.subplots_adjust(wspace=0.4)
     plt.savefig('../paper_figures/calibration.png')
 
+    return both_trials
+
 def raw_pressure_all(idxs, stomps):
     """ Calculate raw pressure (kPa) and force (N) for all data
 
