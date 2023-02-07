@@ -1,4 +1,5 @@
 # The code and data related to the paper titled "Complexity of spatiotemporal plantar pressure patterns during everyday behaviours"
+Preprint available on BioRxiv at https://doi.org/10.1101/2023.01.27.525870
 
 ## Paper authors:
 * Luke D Cleland<sup>1,3*</sup> - ldcleland1@sheffield.ac.uk - repository manager
@@ -49,10 +50,6 @@ Within `insole.py`, `import_data()`, `cut_frame()`, `map2footsim()` are all adap
 ## Additional files required
 FootSim is required to process the raw data. Public FootSim repository can be found at https://github.com/ActiveTouchLab/footsim-python.
 Code for "Complexity of spatiotemporal plantar pressure patterns during everyday behaviours" is built upon that in the FootSim repository
-
-### Files that are generated within the repository following execution of files
-`normalized_steps.pbz2` will be saved into `processed_data` or can be found at https://osf.io/n9f8w/. This file should be stored within `processed_data`
-Files within `scaled_data` will be saved during the pipeline.
 
 ## Acknowledgements
 LC is supported by a studentship from the MRC Discovery Medicine North (DiMeN)
