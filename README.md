@@ -5,7 +5,7 @@ Preprint available on BioRxiv at https://doi.org/10.1101/2023.01.27.525870
 * Luke D Cleland<sup>1,3*</sup> - ldcleland1@sheffield.ac.uk - repository manager
 * Holly M Rowland<sup>1</sup> - hmrowland1@sheffield.ac.uk
 * Claudia Mazzà<sup>2,3</sup> - c.mazza@sheffield.ac.uk
-* Hannes P Saa<sup>1,3</sup> - h.saal@sheffield.ac.uk
+* Hannes P Saal<sup>1,3</sup> - h.saal@sheffield.ac.uk
 
 <sup>1</sup> Department of Psychology, The University of Sheffield, UK <br />
 <sup>2</sup> Department of Mechanical Engineering, The University of Sheffield, UK <br />
