@@ -303,6 +303,8 @@ def mean_std_force_area(all_metrics, step_all_metrics):
 
     all_metrics.groupby('Trial title').describe().to_csv('../descriptive_statistic_csvs/all_task_descriptives.csv')
     all_metrics.groupby('Trial type').describe().to_csv('../descriptive_statistic_csvs/task_type_descriptives.csv')
+    all_metrics.groupby(['Trial title', 'Participant']).describe().to_csv(
+        '../descriptive_statistic_csvs/task_type_participant_descriptives.csv')
 
     # locomotion trials
     step_all_metrics = step_all_metrics[step_all_metrics['Force'] > 5.]
@@ -310,6 +312,4 @@ def mean_std_force_area(all_metrics, step_all_metrics):
     step_all_metrics.groupby('Trial title').describe().to_csv('../descriptive_statistic_csvs/step_task_descriptives.csv')
 
     step_all_metrics.groupby('Trial type').describe().to_csv(
-        '../descriptive_statistic_csvs/task_type_step_descriptives.csv')
-
-
+        '../descriptive_statistic_csvs/task_type_step_descriptives.csv') 
