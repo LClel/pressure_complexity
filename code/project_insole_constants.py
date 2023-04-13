@@ -135,7 +135,7 @@ participant_sex = {'PPT_001' : 'M',
 # participant mass (in kg)
 participant_mass = {'PPT_001' : 81.7,
                     'PPT_002' : 41.4,
-                    'PPT_003' : 76.8,
+                    'PPT_003' : 76.8, # mass matches control to test calibration types
                     'PPT_004' : 73.3,
                     'PPT_005' : 48.2,
                     'PPT_006' : 43.6,
