@@ -678,3 +678,221 @@ def proportion_mapped_sensors():
     compressed_pickle(
         '../processed_data/proportion_mapped_sensors', \
         proportion_mapped)
+
+
+def quantify_raw_signal_captured():
+    """ Quantify the amount of raw signal captured in the mapping process
+
+    Returns:
+
+    """
+
+    x_outline, y_outline = get_foot_outline()
+
+    prefix = '../raw_data/'
+
+    proportion_raw_mapped = {}
+
+    # loop through feet
+    for foot in feet:
+
+        proportion_raw_mapped[foot] = {}
+
+        print(foot)
+        # define file suffix depending on foot
+        if foot == 'left':
+            suffix = 'L_M'
+
+        else:
+            suffix = 'R_M'
+
+        # loop through participants
+        for participant in participant_ids:
+
+            if calibration_type[participant] == 'point':
+                continue
+            else:
+
+                proportion_raw_mapped[foot][participant] = {}
+
+                print(participant)
+                all_trials = np.zeros((59, 21, 1))
+
+                # loop through all trial IDs
+                for trial in trial_ids:
+                    print(trial)
+
+                    # checks if participant took part in the trial
+                    if participant not in details[trial]:
+                        continue
+                    else:
+                        # find trial number to use in filepath
+                        trial_number = trial[-2:]
+
+                        filepath = prefix + participant + '/' + trial + '/' + dates[participant] + 'PPT' + str(
+                            trial_number) + suffix + '.csv'
+
+                        # read in raw data
+                        data = import_data(filepath=filepath, frames=frames_per_trial[participant][trial],
+                                           calibration_type=calibration_type[participant],
+                                           extended_calibration=extended_calibration[participant][trial])
+
+                        # filter signal
+                        data = filter_data(data)
+
+                        all_trials = np.append(all_trials, data, axis=2)
+
+            #else:
+            #    trial_number = trial[-2:]
+
+            #    filepath = prefix + participant + '/' + trial + '/' + dates[participant] + 'PPT' + str(
+            #        trial_number) + suffix + '.csv'
+
+            #    data = import_data(filepath=filepath, frames=frames_per_trial[participant][trial],
+            #                       calibration_type=calibration_type[participant],
+            #                       extended_calibration=extended_calibration[participant][trial])
+
+            #    # filter signal
+            #    data = filter_data(data)
+
+            #    all_trials = np.append(all_trials, data, axis=2)
+
+                if foot == 'right':
+                    all_trials = flip_matrix(all_trials)
+
+                # concatenate all data
+                calibration_data = create_calibration_data(all_trials, all_trials)
+
+                # generate data to calibrate cut frame
+                for_calibration = np.zeros((calibration_data.shape[0], calibration_data.shape[1], 2))
+                for_calibration[:, :, 0] = np.mean(calibration_data, axis=2)
+                for_calibration[:, :, 1] = np.mean(calibration_data, axis=2)
+                calibration_data = for_calibration
+
+                # find cut frame indexes
+                D, min2, max2, min1, max1 = cut_frame(calibration_data, calibrate=True)
+
+
+                ############### TEST ON RAW RAW DATA ################
+                all_trials = np.zeros((59, 21, 1))
+                # loop through all trial IDs
+                for trial in trial_ids:
+                    print(trial)
+
+                    if calibration_type[participant] == 'point':
+                        continue
+                    else:
+
+                        # checks if participant took part in the trial
+                        if participant not in details[trial]:
+                            continue
+                        else:
+                            # find trial number to use in filepath
+                            trial_number = trial[-2:]
+
+                            filepath = prefix + participant + '/' + trial + '/' + dates[participant] + 'PPT' + str(
+                                trial_number) + suffix + '.csv'
+
+                            # read in raw data
+                            data = import_data(filepath=filepath, frames=frames_per_trial[participant][trial],
+                                               calibration_type=calibration_type[participant],
+                                               extended_calibration=extended_calibration[participant][trial])
+
+                            all_trials = np.append(all_trials, data, axis=2)
+
+                if foot == 'right':
+                    all_trials = flip_matrix(all_trials)
+
+
+                all_trials = cut_frame(all_trials, calibrate=False, min2=min2, max2=max2, min1=min1, max1=max1)
+
+
+                D = all_trials
+                reshaped = np.zeros((0, D.shape[2]))
+                for i in range(D.shape[1]):
+
+                    for j in range(D.shape[0]):
+                        reshaped = np.vstack((reshaped, D[j, i, :]))
+
+
+                dim = D.shape  # Dimensions
+                cmin = [min(x_outline), min(y_outline)]
+                cmax = [max(x_outline), max(y_outline)]
+
+                c0 = np.flip(np.linspace(cmin[1], cmax[1], dim[0]))
+                c1 = np.linspace(cmin[0], cmax[0], dim[1])
+
+                print('outline achieved')
+
+                blue = 0
+                green = 0
+                red = 0
+                orange = 0
+
+                pressure_mapped = np.zeros((0, dim[2]))
+                pressure_not_mapped = np.zeros((0, dim[2]))
+
+                D = np.nan_to_num(D, 0)
+                D[D < 1] = 0.0
+                D_ = np.mean(D, axis=2)
+                D_ = (D_ - np.min(D_)) / (np.max(D_) - np.min(D_))
+                D_ = D_ * 100
+                plt.figure()
+                plt.scatter(x_outline, y_outline, c='black', s=3.)
+                for i in range(dim[1]):
+
+                    for j in range(dim[0]):
+
+                        #loca = fs.foot_surface.pixel2hand(np.array([c1[i], c0[j]]))
+                        loca = np.array([c1[i], c0[j]])
+
+                        if (np.isnan(D[j, i, 0]) is False or np.nanmax(D[j, i, :]) > 0.0) and \
+                                fs.foot_surface.locate(loca)[0][
+                                    0] == '':
+                            plt.scatter(loca[0], loca[1], c='blue', label='data but no region', s=D_[j,i])
+                            blue += 1
+                            pressure_not_mapped = np.vstack((pressure_not_mapped, D[j, i, :]))
+
+                        if (np.isnan(D[j, i, 0]) is False or np.nanmax(D[j, i, :]) > 0.0) and \
+                                fs.foot_surface.locate(loca)[0][
+                                    0] != '':
+                            plt.scatter(loca[0], loca[1], c='green', label='data and region', s=D_[j,i])
+                            green += 1
+                            pressure_mapped = np.vstack((pressure_mapped, D[j, i, :]))
+
+                        if (np.isnan(D[j, i, 0]) or np.nanmax(D[j, i, :]) < 1.0) and fs.foot_surface.locate(loca)[0][
+                            0] == '':
+                            plt.scatter(loca[0], loca[1], c='red', label='no data and no region', s=D_[j,i])
+                            red += 1
+
+                        if (np.isnan(D[j, i, 0]) or np.nanmax(D[j, i, :]) < 1.0) and fs.foot_surface.locate(loca)[0][
+                            0] != '':
+                            plt.scatter(loca[0], loca[1], c='orange', label='no data and region', s=D_[j,i])
+                            orange += 1
+
+                print('Active off foot: ', blue)
+                print('Active on foot: ', green)
+                print('Not active off foot: ', red)
+                print('Not active on foot: ', orange)
+                print('Proportion active mapped: ', green / (blue + green) * 100)
+                print('Proportion pressure mapped: ', np.nanmean(
+                    (np.sum(pressure_mapped, axis=0) / (np.sum(pressure_mapped, axis=0) + np.sum(pressure_not_mapped, axis=0))) * 100))
+                # print(np.sum(pressure_mapped) / (np.sum(pressure_mapped) + np.sum(pressure_not_mapped)))
+
+
+                #plt.axis("off")
+                #plt.show()
+                proportion_raw_mapped[foot][participant]['Active off foot'] = blue
+                proportion_raw_mapped[foot][participant]['Active on foot'] = green
+                proportion_raw_mapped[foot][participant]['Not active off foot'] = red
+                proportion_raw_mapped[foot][participant]['Not active on foot'] = orange
+                proportion_raw_mapped[foot][participant]['Proportion active mapped'] = green / (blue + green) * 100
+                proportion_raw_mapped[foot][participant]['Proportion pressure mapped'] = np.nanmean((np.sum(pressure_mapped,
+                                                                                                       axis=0) / (
+                                                                                                         np.sum(
+                                                                                                             pressure_mapped,
+                                                                                                             axis=0) + np.sum(
+                                                                                                     pressure_not_mapped,
+                                                                                                     axis=0))) * 100)
+
+    compressed_pickle('../processed_data/proportion_raw_mapped_sensors', proportion_raw_mapped)
