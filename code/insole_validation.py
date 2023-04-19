@@ -205,6 +205,177 @@ def project_insole_calibration(separation_indexes, calibration_constants):
 
     return both_trials
 
+
+def project_insole_calibration_contact_area(separation_indexes, calibration_constants):
+    """Run and print the calibration tests. Calculates the percentage of mass captured by the insoles
+    during the 3 calibration trials:
+        trial01: both feet, left foot, right foot, both feet
+        trial02: flat, tiptoe, heel, flat
+        trial20: repetition of trial01, but at the end of the experiment
+
+    Args:
+        separation_indexes: timepoints during which stance chanegd - in project_insole_information
+        calibration_constants: file containing values used to recalibrate data
+
+    Returns:
+
+    """
+
+    filepath_prefix = '../preprocessed_data/'
+    before_after = ['pre', 'post']
+
+    both_trials = {}
+
+    # loop through the 3 calibration trials
+    for trial in separation_indexes:
+
+        trial_separations = separation_indexes[trial]
+
+        # create empty array to store the data for the trial
+        data = np.array([])
+
+        pre_post = []
+        trial_1_20 = []
+        condition = []
+        ppts = []
+
+        if trial != 'trial02':
+
+            # loop through each participant in the trials
+            for participant in separation_indexes[trial]:
+
+                ppt_separations = trial_separations[participant]
+
+                # get the participant mass
+                actual_mass = [participant_mass[participant]]
+
+                # exclude the participant if point calibration was run
+                if calibration_type[participant] == 'point':
+                    continue
+                else:
+
+                    # load the data for the left foot
+                    foot = 'left'
+                    file = filepath_prefix + participant + '/' + trial + '/' + foot + '/' + foot + ' data.pbz2'
+                    left = decompress_pickle(file)
+                    left_data = left['Raw data'][:, :, ppt_separations[foot][0]:ppt_separations[foot][1]]
+                    left_reshaped = left['Reshaped data'][:, ppt_separations[foot][0]:ppt_separations[foot][1]]
+                    left_regions = left['Regions']
+                    # left_data_pre = left_data / calibration_constants['left'][participant]
+
+                    # load the data for the right foot
+                    foot = 'right'
+                    file = filepath_prefix + participant + '/' + trial + '/' + foot + '/' + foot + ' data.pbz2'
+                    right = decompress_pickle(file)
+                    right_data = right['Raw data'][:, :, ppt_separations[foot][0]:ppt_separations[foot][1]]
+                    right_reshaped = right['Reshaped data'][:, ppt_separations[foot][0]:ppt_separations[foot][1]]
+                    right_regions = right['Regions']
+                    # right_data_pre = right_data / calibration_constants['right'][participant]
+
+                    left_contact_areas, left_contact_area_as_percent = contact_area_per_region(left_data, left_regions,
+                                                                                               left_reshaped)
+                    left_total_area = total_contact_area(left_contact_area_as_percent)
+
+                    right_contact_areas, right_contact_area_as_percent = contact_area_per_region(right_data,
+                                                                                                 right_regions,
+                                                                                                 right_reshaped)
+                    right_total_area = total_contact_area(right_contact_area_as_percent)
+
+                    ###################### BOTH #####################
+
+                    left_data_both = left['Raw data'][:, :, ppt_separations['both'][0]:ppt_separations['both'][1]]
+                    left_reshaped_both = left['Reshaped data'][:, ppt_separations['both'][0]:ppt_separations['both'][1]]
+
+                    right_data_both = right['Raw data'][:, :, ppt_separations['both'][0]:ppt_separations['both'][1]]
+                    right_reshaped_both = right['Reshaped data'][:,
+                                          ppt_separations['both'][0]:ppt_separations['both'][1]]
+
+                    left_contact_areas_both, left_contact_area_as_percent_both = contact_area_per_region(left_data_both,
+                                                                                                         left_regions,
+                                                                                                         left_reshaped_both)
+                    left_total_area_both = total_contact_area(left_contact_area_as_percent_both)
+
+                    right_contact_areas_both, right_contact_area_as_percent_both = contact_area_per_region(
+                        right_data_both, right_regions, right_reshaped_both)
+                    right_total_area_both = total_contact_area(right_contact_area_as_percent_both)
+
+                    both_area_mean = (left_total_area_both + right_total_area_both) / 2
+
+                    # loop through before and after the recalibration
+                    for case in before_after:
+                        if case == 'pre':
+                            trial_1_20.extend([trial] * 500)
+                            pre_post.extend([case] * 1500)
+
+                            data = np.append(data, left_total_area)
+                            condition.extend(['left'] * 500)
+                            data = np.append(data, both_area_mean)
+                            condition.extend(['both'] * 500)
+                            data = np.append(data, right_total_area)
+                            condition.extend(['right'] * 500)
+
+                            ppts.extend([participant] * 1500)
+
+                        elif case == 'post':
+                            trial_1_20.extend([trial] * 500)
+                            pre_post.extend([case] * 1500)
+
+                            data = np.append(data, left_total_area)
+                            condition.extend(['left'] * 500)
+                            data = np.append(data, both_area_mean)
+                            condition.extend(['both'] * 500)
+                            data = np.append(data, right_total_area)
+                            condition.extend(['right'] * 500)
+
+                            ppts.extend([participant] * 1500)
+
+                        else:
+                            continue
+
+            for_df = {'Calibration': pre_post, 'Condition': condition, 'Data': data, 'Participant': ppts}
+            df = pd.DataFrame(for_df)
+            both_trials[trial] = df
+
+            # for_df = {'Calibration': pre_post, 'Condition': condition, 'Data': data, 'Participant': ppts}
+            # df = pd.DataFrame(for_df)
+            # both_trials[trial] = df
+
+    flierprops = dict(marker='*', markerfacecolor='r', markersize=.2,
+                      linestyle='none', markeredgecolor='r')
+
+    plt.close("all")
+    colours = ['darkorange', 'darkorchid']
+    sns.set_palette(colours)
+    plt.figure(figsize=(13, 8))
+    plt.subplot(1, 3, 1)
+    plt.suptitle('Percentage of participant mass captured by the insoles')
+    plt.title('trial 1')
+    sns.boxplot(x=both_trials['trial01']['Condition'], y=both_trials['trial01']['Data'])  # , \
+    # hue=both_trials['trial01']['Calibration'], flierprops=flierprops)
+    plt.ylabel('Contact area')
+    plt.ylim(0, 200)
+
+    plt.subplot(1, 3, 2)
+    # plt.title('trial 02')
+    # sns.boxplot(x=both_trials['trial02']['Condition'], y=both_trials['trial02']['Data'],
+    #            hue=both_trials['trial02']['Calibration'], flierprops=flierprops)
+    # plt.ylabel('percentage of mass')
+    # plt.ylim(0,300)
+
+    plt.subplot(1, 3, 3)
+    plt.title('trial 20')
+    sns.boxplot(x=both_trials['trial20']['Condition'], y=both_trials['trial20']['Data']), \
+        # hue=both_trials['trial20']['Calibration'], flierprops=flierprops)
+    plt.ylabel('Contact area')
+    plt.ylim(0, 200)
+    plt.subplots_adjust(wspace=0.4)
+    plt.savefig('../paper_figures/area_performance_over_time.png')
+
+    print(both_trials['trial01'].groupby('Condition').describe())
+    print(both_trials['trial20'].groupby('Condition').describe())
+
+    return both_trials
+
 def raw_pressure_all(idxs, stomps):
     """ Calculate raw pressure (kPa) and force (N) for all data
 
