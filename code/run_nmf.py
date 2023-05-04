@@ -272,3 +272,177 @@ def inverse_transform_trial_type(trial_type_dfs, trial_type_models, scaled):
     plt.savefig(
         '../individual_figures/type_all_nmf_inverse_heatmap_5.png',
         dpi=600)
+
+
+
+def nmf_subset_random_frames(scaled, trials):
+    """ Conduct NMF on a random selection of pressure frames
+    Args:
+        scaled (dict containing np.array()): data for a single trial from all participants scaled to a uniform size
+        trials (list): list of trial ids to run on
+    Returns:
+        Saves 2 dictionaries:
+            nmf_dfs: explained variance by each NMF component for each trial
+            nmf_weights: NMF weight and component matrices for each trial
+    """
+    nmf_dfs = {}
+    nmf_weights = {}
+
+    halves = ['First half', 'Second half']
+
+    # loop through each trial
+    for trial in trials:
+
+        nmf_dfs[trial] = {}
+        nmf_weights[trial] = {}
+
+        middle = scaled[trial]['Raw data'].shape[2] // 2
+
+
+        # create list of numbers 1 to 30
+        components = list(range(1, 31))
+
+        for selection in ['First', 'Second']:
+            nums = random.sample(range(0, scaled[trial]['Raw data'].shape[2]), scaled[trial]['Raw data'].shape[2] // 3)
+
+            D = scaled[trial]['Raw data'][:,:,nums]
+
+
+            idxs = scaled[trial]['idxs']
+            reshaped = np.zeros((D.shape[0] * D.shape[1], D.shape[2]))
+            k = 0
+            for j in range(D.shape[1]):
+                for i in range(D.shape[0]):
+                    reshaped[k] = D[i, j, :]
+
+                    k += 1
+
+            # remove the empty data
+            data = reshaped[idxs]
+            # ensure that any nans are changed to zero
+            data = np.nan_to_num(data)
+
+            data = data.T
+
+            perfs = []
+
+            # run NMF on the data with components 1 to 30
+            for i in range(len(components)):
+                nmf = NMF(n_components=components[i])
+                W = nmf.fit_transform(data)
+                H = nmf.components_
+
+                # calculate variance explained
+                perfs.append(explained_variance(data, W, H))
+
+            nmf_dfs[trial][selection] = pd.DataFrame({'Component': list(range(30)), 'Variance explained': pd.Series(perfs)})
+
+            nmf_weights[trial][selection] = {}
+            nmf_weights[trial][selection]['H'] = H
+            nmf_weights[trial][selection]['W'] = W
+
+    # save data
+    compressed_pickle('../processed_data/nmf_dfs_subset_random_frames', nmf_dfs)
+
+    compressed_pickle('../processed_data/nmf_weights_subset_random_frames', nmf_weights)
+
+
+def nmf_subset_random_ppts(scaled, trials, stomps):
+    """ Conduct NMF on a random selection of participants within a trial
+    Args:
+        scaled (dict containing np.array()): data for a single trial from all participants scaled to a uniform size
+        trials (list): list of trial ids
+        stomps (dict): timings of stomps for each trial for each participant
+    Returns:
+        Saves 2 dictionaries:
+            nmf_dfs: explained variance by each NMF component for each trial
+            nmf_weights: NMF weight and component matrices for each trial
+    """
+    nmf_dfs = {}
+    nmf_weights = {}
+
+    halves = ['First half', 'Second half']
+
+    # loop through each trial
+    for trial in trials:
+        print(trial)
+        print(scaled[trial]['Raw data'].shape)
+
+        nmf_dfs[trial] = {}
+        nmf_weights[trial] = {}
+
+
+        if trial != 'trial05':
+            indexes = np.array([0])
+            i = 0
+            for j in range(2):
+                for participant in stomps[trial]:
+                    i + 1
+                    indexes = np.append(indexes, indexes[i - 1] + (
+                            stomps[trial][participant][1] - stomps[trial][participant][0]))
+
+        else:
+            indexes = np.array([0])
+            i = 0
+            for j in range(2):
+                for participant in stomps[trial]:
+                    i + 1
+                    indexes = np.append(indexes, indexes[i - 1] + 4500)
+
+
+        # create list of numbers 1 to 30
+        components = list(range(1, 31))
+
+        for selection in ['First', 'Second']:
+            ppt_selction = random.sample(range(0, 16), 6)
+
+
+            nums = np.array([])
+            for p in ppt_selction:
+                nums = np.append(nums, list(range(indexes[p - 1], indexes[p])))
+                nums = np.append(nums, list(range(indexes[(p - 1) + 16], indexes[p + 16])))
+
+            nums = np.int_(nums)
+
+
+
+            D = scaled[trial]['Raw data'][:,:,nums]
+
+
+            idxs = scaled[trial]['idxs']
+            reshaped = np.zeros((D.shape[0] * D.shape[1], D.shape[2]))
+            k = 0
+            for j in range(D.shape[1]):
+                for i in range(D.shape[0]):
+                    reshaped[k] = D[i, j, :]
+
+                    k += 1
+
+            # remove the empty data
+            data = reshaped[idxs]
+            # ensure that any nans are changed to zero
+            data = np.nan_to_num(data)
+
+            data = data.T
+
+            perfs = []
+
+            # run NMF on the data with components 1 to 30
+            for i in range(len(components)):
+                nmf = NMF(n_components=components[i])
+                W = nmf.fit_transform(data)
+                H = nmf.components_
+
+                # calculate variance explained
+                perfs.append(explained_variance(data, W, H))
+
+            nmf_dfs[trial][selection] = pd.DataFrame({'Component': list(range(30)), 'Variance explained': pd.Series(perfs)})
+
+            nmf_weights[trial][selection] = {}
+            nmf_weights[trial][selection]['H'] = H
+            nmf_weights[trial][selection]['W'] = W
+
+    # save data
+    compressed_pickle('../processed_data/nmf_dfs_subset_random_ppt', nmf_dfs)
+
+    compressed_pickle('../processed_data/nmf_weights_subset_random_ppt', nmf_weights)
