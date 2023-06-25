@@ -1,5 +1,8 @@
 # The code and data related to the paper titled "Complexity of spatiotemporal plantar pressure patterns during everyday behaviours"
-Preprint available on BioRxiv at https://doi.org/10.1101/2023.01.27.525870
+Published manuscript is published in the Journal of the Royal Society Interface, DOI: 10.1098/rsif.2023.0052
+
+### References
+Cleland, L. D., Rowland, H. M., Mazzà, C., & Saal, H. P. (2023). Complexity of spatiotemporal plantar pressure patterns during everyday behaviours. Journal of the Royal Society Interface.
 
 ## Paper authors:
 * Luke D Cleland<sup>1,3*</sup> - ldcleland1@sheffield.ac.uk - repository manager
